@@ -2,12 +2,37 @@
 
 const http = require('http');
 const pug = require('pug');
+
+//Basic認証をするためのモジュールの読み込み
+const auth = require('http-auth');
+const basic = auth.basic(
+  //realmプロパティに、Basic認証時に保護する領域を規定する
+  {realm: 'Enquetes Area.'},
+  //無名関数で、ユーザー名とパスワードを設定
+  (username, password, callback) => {
+    callback(username === 'guest' && password === 'xaXZJQmE');
+  }
+);
 const server = http
-  .createServer((req, res) => {
+  //第一引数にbasicオブジェクトを渡してBasic認証に対応させる
+  .createServer(basic, (req, res) => {
     const now = new Date();
     console.info(
       '[' + now + '] Requested by ' + req.connection.remoteAddress
     );
+
+    //パスが /logout である時には、ステータスコード401を返す
+    //メッセージ「ログアウトしました」をコンテンツとして書き出し
+    //res.endでレスポンスを終了
+    if (req.url === '/logout') {
+      res.writeHead(401, {
+        'Content-Type' : 'text/plain; charset=utf-8'
+      });
+      res.end('ログアウトしました');
+
+      //この関数の実行を終了
+      return;
+    }
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8'
     });
